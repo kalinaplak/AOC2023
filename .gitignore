@@ -1,0 +1,16 @@
+.DS_Store
+/node_modules
+/npm-debug.log*
+/logs
+/.idea
+.angular/
+/temp_node_modules
+*.tar
+*-package.json
+/.vscode/settings.json
+.npmrc
+yarn-error.log
+.sourcemaps
+.vs
+/tests
+/.yarn
