@@ -1,6 +1,6 @@
 import { filter, map, pipe, sum, toarray } from "powerseq";
-
 const fs = require('fs');
+
 const input = fs.readFileSync('./day3/input.txt', "utf-8");
 
 function parseInput(inputString: string): (number | string)[][] {
