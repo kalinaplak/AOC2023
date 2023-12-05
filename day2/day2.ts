@@ -1,6 +1,5 @@
-import { filter, map, pipe, sum, toarray } from "powerseq";
-
 const fs = require('fs');
+import { filter, map, pipe, sum } from "powerseq";
 
 interface GameSet {
   red: number;
@@ -52,16 +51,12 @@ function getMaxCubesPower(sets: GameSet[]): number{
     if(curr.blue > acc.blue) acc.blue = curr.blue;
     return acc;
   },{ red: -1, green: -1, blue:-1});
-  
+
   return maxCubes.red * maxCubes.green * maxCubes.blue;
 }
 
 function getGamesPowerSum(games: GameSet[][]){
-  return pipe(
-    games,
-    map(g => getMaxCubesPower(g)),
-    sum()
-  )
+  return sum(games, getMaxCubesPower);
 }
 
 console.log(getGamesPowerSum(gameSets))
