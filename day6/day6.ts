@@ -1,4 +1,4 @@
-import { map, pipe, reduce, sum } from "powerseq";
+import { map, pipe, reduce } from "powerseq";
 
 const fs = require("fs");
 
@@ -54,3 +54,13 @@ function calculateResult(races: Race[]) {
 }
 
 console.log(calculateResult(parseInput(input)));
+
+//2.
+function parseInputToSingleRace(input: string): Race {
+  const [time, distance] = input
+    .split("\n")
+    .map((l) => parseInt(l.split(":")[1].split(/\s+/).join("")));
+  return { distance, time };
+}
+
+console.log(calculateResult([parseInputToSingleRace(input)]));
