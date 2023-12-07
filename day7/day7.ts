@@ -4,7 +4,7 @@ const fs = require("fs");
 
 const cardsStrength = ['2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A'];
 const cardsMap =      ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M'];
-const cardsMapJ =     ['B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'A', 'L', 'M'];
+const cardsMapJ =     ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'J', 'k', 'l', 'm'];
 
 const types = ['nothing', 'one', 'two', 'three', 'full', 'four', 'five'] as const;
 type CardType = typeof types[number];
@@ -15,14 +15,17 @@ interface Hand {
     bid: number;
 }
 
-const input = fs.readFileSync("./day7/inputMini.txt", "utf-8");
+const input = fs.readFileSync("./day7/input.txt", "utf-8");
 
-function getHandType(cardGroupsLengths: number[]): CardType{
-    if(cardGroupsLengths[0] === 5) return 'five';
-    if(cardGroupsLengths[0] === 4) return 'four';
-    if(cardGroupsLengths[0] === 3 ) return cardGroupsLengths[1] === 2 ? 'full' : 'three';
-    if(cardGroupsLengths[0] === 2 ) return cardGroupsLengths[1] === 2 ? 'two' : 'one';
-    else return 'nothing';
+function getHandType(cardGroupsLengths: number[]): CardType {
+    const [firstGroupLength, secondGroupLength] = cardGroupsLengths;
+    switch (firstGroupLength) {
+        case 5: return 'five';
+        case 4: return 'four';
+        case 3: return secondGroupLength === 2 ? 'full' : 'three';
+        case 2: return secondGroupLength === 2 ? 'two' : 'one';
+        default: return 'nothing';
+    }
 }
 
 function groupCardsInHand(cards: string[]){
@@ -35,12 +38,12 @@ function groupCardsInHand(cards: string[]){
     );
 }
 
-function mapCardsToHand(cards: string[], bid: number): Hand{
+function mapCardsToHand(cards: string[], bid: number): Hand {
     const cardGroups = groupCardsInHand(cards);
     return { type: getHandType(cardGroups), cards, bid };
 }
 
-function parseInput(input: string, mapToHandFn: (cards: string[], bid: number) => Hand){
+function parseInput(input: string, mapToHandFn: (cards: string[], bid: number) => Hand) {
     return pipe(
         input.split('\n'),
         map(line =>{
@@ -51,12 +54,16 @@ function parseInput(input: string, mapToHandFn: (cards: string[], bid: number) =
     );
 }
 
+function calculateCardStrengthString(cards: string[], strengthMap){
+    return cards.map(c => strengthMap[cardsStrength.indexOf(c)]).join('');
+}
+
 //1.
-function calculateBids(hands: Hand[], cMap){
+function calculateBids(hands: Hand[], strengthMap) {
     return pipe(
         hands,
         orderby(hand => types.indexOf(hand.type)),
-        thenby(hand => hand.cards.map(c=> cMap[cardsStrength.indexOf(c)]).join('')),
+        thenby(hand => calculateCardStrengthString(hand.cards, strengthMap)),
         map((h,i)=> h.bid * (i+1)),
         sum()
     )
@@ -64,31 +71,34 @@ function calculateBids(hands: Hand[], cMap){
 console.log(calculateBids(parseInput(input, mapCardsToHand), cardsMap));
 
 //2.
-function getHandTypeWithJoker(prevType: CardType, jokers: number): CardType{
-    if(prevType === 'four' || jokers === 5) return 'five';
-    if(prevType === 'three') return jokers === 2 ? 'five' : 'four';
-    if(prevType === 'two') return 'full';
-    if(prevType === 'one') return jokers === 3 ? 'five' : jokers === 2 ? 'four': 'three';
-    else{
-        if(jokers === 4) return 'five';
-        if(jokers === 3) return 'four';
-        if(jokers === 2) return 'three';
-        if(jokers === 1) return 'one';
+function getHandTypeWithJoker(withoutJType: CardType, jokers: number): CardType{
+    if(withoutJType === 'four' || jokers === 5) return 'five';
+    if(withoutJType === 'three') return jokers === 2 ? 'five' : 'four';
+    if(withoutJType === 'two') return 'full';
+    if(withoutJType === 'one') return jokers === 3 ? 'five' : jokers === 2 ? 'four': 'three';
+   
+    switch (jokers) {
+        case 4: return 'five';
+        case 3: return 'four';
+        case 2: return 'three';
+        case 1: return 'one';
+        default: return null;
     }
-    return null;
+    
 }
 
-function mapCardsToHandWithJoker(cards: string[], bid: number): Hand{
-    if(cards.indexOf('J') !== -1) {
+function mapCardsToHandWithJoker(cards: string[], bid: number): Hand {
+    if (cards.includes('J')) {
         const cardsWithoutJokers = cards.filter(c => c !== 'J');
         const numberOfJokers = cards.length - cardsWithoutJokers.length;
-        const cardGroups = groupCardsInHand(cardsWithoutJokers);
-        const handWithoutJokerType = getHandType(cardGroups);
-        return { type: getHandTypeWithJoker(handWithoutJokerType, numberOfJokers), cards, bid };
+        const handWithoutJokerType = getHandType(groupCardsInHand(cardsWithoutJokers));
+        const typeWithJoker = getHandTypeWithJoker(handWithoutJokerType, numberOfJokers);
+        return { type: typeWithJoker, cards, bid };
     } else {
         const cardGroups = groupCardsInHand(cards);
-        return { type: getHandType(cardGroups), cards, bid };
+        const type = getHandType(cardGroups);
+        return { type, cards, bid };
     }
 }
 
-// console.log(parseInput(input, mapCardsToHandWithJoker))
+console.log(calculateBids(parseInput(input, mapCardsToHandWithJoker), cardsMapJ))
