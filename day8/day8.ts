@@ -16,9 +16,9 @@ function parseInput(input: string) {
   return { instructions: [...line1] as Direction[], directionMap };
 }
 
-export function processInstructions({instructions, directionMap}) {
+function processInstructions({instructions, directionMap}, startLocation) {
   const endCondition = "ZZZ";
-  let currentLocation = "AAA";
+  let currentLocation = startLocation;
   let steps = 0;
 
   while (currentLocation !== endCondition) {
@@ -30,4 +30,4 @@ export function processInstructions({instructions, directionMap}) {
   return steps;
 }
 
-console.log(processInstructions(parseInput(input)));
+console.log(processInstructions(parseInput(input), "AAA"));
