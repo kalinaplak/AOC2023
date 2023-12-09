@@ -36,3 +36,6 @@ function sumExtrapolatedValues(lines: number[][]){
 
 const lines = parseInput(input);
 console.log(sumExtrapolatedValues(lines));
+
+//2.
+console.log(sumExtrapolatedValues(lines.map(l => l.reverse())));
