@@ -25,10 +25,7 @@ function getValueFromMapType(initial: number, mapType: number[][]): number{
 }
 
 function getProcessedValue(seed: number, almanac: number[][][], processMapFn: (v: number, map: number[][]) => number){
-  return almanac.reduce((initial, almanacEntry) => {
-    initial = processMapFn(initial, almanacEntry);
-    return initial;
-  }, seed);
+  return almanac.reduce((initial, almanacEntry) => processMapFn(initial, almanacEntry), seed);
 }
 
 //1.

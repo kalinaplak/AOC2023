@@ -46,10 +46,7 @@ function calculateResult(races: Race[]) {
   return pipe(
     races,
     map((r) => calculateWinningValues(r.time, r.distance).length),
-    reduce((acc, curr) => {
-      acc = acc * curr;
-      return acc;
-    }, 1)
+    reduce((acc, curr) =>  acc * curr, 1)
   );
 }
 

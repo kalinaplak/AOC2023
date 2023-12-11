@@ -20,7 +20,7 @@ function extrapolateNextValueInLine(line: number[]){
   const result = pipe(
     processLineRec(line),
     reverse(),
-    reduce((acc, curr: any)=>{ acc += curr[curr.length -1]; return acc; }, 0),
+    reduce((acc, curr: any)=> acc + curr[curr.length -1], 0),
   );
   return result;
 }
