@@ -1,4 +1,4 @@
-import { find, flatmap, pipe } from "powerseq";
+import { count, filter, find, flatmap, pipe } from "powerseq";
 
 const fs = require("fs");
 
@@ -32,8 +32,10 @@ function move(map: string[][], {value, row, col}, direction: 'next' | 'prev'){
   return null;
 }
 
+const pipesMap = parseInput(input);
+
 //1.
-function calculatePathLength(map: string[][]){
+function calculatePath(map: string[][]){
   const startingPos = pipe(
     map,
     flatmap((row, rowIndex) => row.map((value, col) => ({ value, row: rowIndex, col }))),
@@ -51,7 +53,37 @@ function calculatePathLength(map: string[][]){
     current = node;
   }
 
-  return visited.length / 2;
+  return visited;
 }
 
-console.log(calculatePathLength(parseInput(input)));
+function calculatePathLength(map: string[][]){
+  return calculatePath(map).length / 2;
+}
+console.log(calculatePathLength(pipesMap));
+
+//2.
+function calculateEnclosedElementsLength(pipesMap: string[][]) {
+  const path = calculatePath(pipesMap);
+  return pipe(
+    pipesMap,
+    flatmap((row, i)=> {
+      let isInsideLoop = false;
+      return row.map((val, j) => {
+        const nodeInPath = path.find(p => p.row === i && p.col === j);
+        if (nodeInPath) {
+          const isSNodeWithAdjacentVertical = nodeInPath.value === "S" && ["|", "L", "J"].includes(pipesMap[i + 1][j]);
+          const isVerticalNode = ["|", "F", "7"].includes(val);
+          if (isSNodeWithAdjacentVertical || isVerticalNode)
+            isInsideLoop = !isInsideLoop;
+        } else if (isInsideLoop) {
+          return 1;
+        }
+        return null;
+      })
+    }),
+    filter(el => !!el),
+    count()
+  )
+}
+
+console.log(calculateEnclosedElementsLength(pipesMap));
