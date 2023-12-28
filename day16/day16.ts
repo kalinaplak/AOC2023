@@ -1,4 +1,4 @@
-import { distinct, map, pipe, toarray } from "powerseq";
+import { distinct, flatmap, map, max, pipe, range, toarray } from "powerseq";
 
 const fs = require("fs");
 
@@ -62,15 +62,31 @@ function getVisitedFields(board: SpaceType[][], i: number, j: number, dir: Direc
 }
 
 //1.
-function part1(input: SpaceType[][]){
+function part1(input: SpaceType[][], i = 0, j = 0, dir: Direction = 'right'){
   return pipe(
-    [...getVisitedFields(input, 0,0, 'right')],
+    [...getVisitedFields(input, i,j, dir)],
     map((s:any) =>  s.split('-')),
     distinct(s => s[1]),
     toarray()
   ).length
 }
 
+//2.
+function part2(input: SpaceType[][]){
+  const allPossibleStarts = [
+    [...range(0, input[0].length - 1)].map(c => ({i: 0, j: c, dir: 'bottom'})),
+    [...range(0, input[0].length - 1)].map(c => ({i: input.length - 1, j: c, dir: 'top'})),
+    [...range(0, input.length - 1)].map(r => ({i: r, j: 0, dir: 'right'})),
+    [...range(0, input.length - 1)].map(r => ({i: r, j: input[0].length -1, dir: 'left'})),
+  ];
+  
+  return pipe(
+    allPossibleStarts,
+    flatmap(s => s, (i: any, s: any) =>  part1(input, s.i, s.j, s.dir as Direction)),
+    max()
+  )
+}
 
 const board: SpaceType[][] = parseInput(input);
 console.log(part1(board));
+console.log(part2(board));
