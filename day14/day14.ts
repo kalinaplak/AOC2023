@@ -1,5 +1,5 @@
 import fs from "fs";
-import { count, filter, map, pipe, range, sum, toarray } from "powerseq";
+import { count, filter, filtermap, map, pipe, range, sum, toarray } from "powerseq";
 
 const input = fs.readFileSync("./day14/input.txt", "utf8");
 type Direction = "up" | "down" | "left" | "right";
@@ -66,8 +66,7 @@ function findRockPositions(matrix) {
   return matrix.flatMap((row, i) =>
     pipe(
       row,
-      map((cell, j) => ({ cell, i, j })),
-      filter(({ cell }) => cell === "O"),
+      filtermap((cell, j) => cell === "O" ? { cell, i, j } : null ),
       toarray()
     )
   );

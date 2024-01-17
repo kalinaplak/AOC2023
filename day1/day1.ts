@@ -8,11 +8,7 @@ function getCalibrationNumber(stringNumbers: string[]): number{
 }
 
 function calculateCalibrationSum(input: string[], mapFn: (line: string)=> number){
-  return pipe(
-    input,
-    map(line => mapFn(line)),
-    sum()
-  );
+  return pipe(input, map(mapFn), sum());
 }
 
 const lines = fs.readFileSync('./day1/input.txt', "utf-8").split('\n');

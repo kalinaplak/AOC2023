@@ -32,7 +32,7 @@ function groupCardsInHand(cards: string[]){
     return pipe( 
         cards, 
         groupby(c => c), 
-        map(g => [...g].length),
+        map(([_, values]) => values.length),
         orderbydescending(n => n),
         toarray()
     );

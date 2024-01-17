@@ -1,4 +1,4 @@
-import { count, filter, map, pipe, range, sum, toarray } from "powerseq";
+import { count, filter, filtermap, map, pipe, range, sum, toarray } from "powerseq";
 
 const fs = require("fs");
 
@@ -47,8 +47,7 @@ function checkMirror(matrix: string[][], col: number, allowUnequal){
 function checkMatrix(matrix: string[][], allowUnequal){
   return pipe(
     range(0, matrix.length),
-    map(col => checkMirror(matrix, col, allowUnequal) ? col : null),
-    filter (col => !!col),
+    filtermap(col => checkMirror(matrix, col, allowUnequal) ? col : null),
     sum()
   )
 }

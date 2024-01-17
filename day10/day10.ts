@@ -35,7 +35,7 @@ function move(map: string[][], {value, row, col}, direction: 'next' | 'prev'){
 const pipesMap = parseInput(input);
 
 //1.
-function calculatePath(map: string[][]){
+function calculatePath(map: string[][]) {
   const startingPos = pipe(
     map,
     flatmap((row, rowIndex) => row.map((value, col) => ({ value, row: rowIndex, col }))),

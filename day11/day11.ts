@@ -1,4 +1,4 @@
-import { filter, flatmap, map, pipe, sum, toarray } from "powerseq";
+import { filter, filtermap, flatmap, map, pipe, sum, toarray } from "powerseq";
 const fs = require("fs");
 
 const input = fs.readFileSync("./day11/input.txt", "utf-8");
@@ -53,9 +53,7 @@ console.log(calculateDistancesSum(parseInput(input)));
 function getIndexesToExpand(universe: string[][]){
   return  pipe(
     universe,
-    map((row, index) => ({ row, index })),
-    filter(({ row }) => row.every(item => item === '.')),
-    map(({ index }) => index),
+    filtermap((row, index) => row.every(item => item === '.') ? index : null),
     toarray()
   );
 }
