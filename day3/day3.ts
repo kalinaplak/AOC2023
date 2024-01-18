@@ -1,52 +1,54 @@
-import { filter, filtermap, map, pipe, sum, toarray } from "powerseq";
-const fs = require("fs");
+import { concat, filter, filtermap, flat, flatmap, map, pairwise, pipe, sum, take, toarray } from 'powerseq';
+const fs = require('fs');
 
-const input = fs.readFileSync("./day3/input.txt", "utf-8");
+interface PartNumber {
+  number: number;
+  row: number;
+  column: number;
+}
+
+function matchDigitsAndNotDigits(line: string): string[] {
+  return line.match(/[^0-9]+|[0-9]+/g) || [];
+}
+
+function matchDigits(line: string) {
+  return /^\d+$/.test(line);
+}
+
+function mapDigitsAndNotDigits(value: string): (number | string)[] {
+  return matchDigits(value) ? Array(value.length).fill(parseInt(value, 10)) : [...value.split('')];
+}
 
 function parseInput(inputString: string): (number | string)[][] {
-  const rows: string[] = inputString.trim().split("\n");
-  return rows.map((row: string): (number | string)[] => {
-    //not digits and digits
-    const elements: string[] = row.match(/[^0-9]+|[0-9]+/g) || [];
-    return elements.flatMap(
-      (element) =>
-        <any>(
-          (/^\d+$/.test(element)
-            ? Array(element.length).fill(parseInt(element, 10))
-            : [...element.split("")])
-        )
-    );
-  });
-}
-
-function isInsideMatrix(r: number, c: number, grid: any[][]): boolean {
-  const rows = grid.length;
-  const cols = grid[0].length;
-  return r >= 0 && r < rows && c >= 0 && c < cols;
-}
-
-const ADJACENT_NEIGHBOURS_M = [
-  [-1, -1],
-  [-1, 0],
-  [-1, 1],
-  [0, -1],
-  [0, 1],
-  [1, -1],
-  [1, 0],
-  [1, 1],
-];
-
-function removeNumbrResultDuplicates(partNumbers: any[]) {
   return pipe(
-    partNumbers,
-    filter((num, index) => index === 0 || 
-      partNumbers[index - 1].row !== num.row || 
-      partNumbers[index - 1].number !== num.number || 
-      num.column - partNumbers[index - 1].column > 1
-    ),
+    inputString.trim().split('\n'),
+    map((row: string) => matchDigitsAndNotDigits(row).flatMap(mapDigitsAndNotDigits)),
     toarray()
   );
 }
+
+function isInsideMatrix(r: number, c: number, grid: any[][]): boolean {
+  return r >= 0 && r < grid.length && c >= 0 && c < grid[0].length;
+}
+
+function removeNumbrResultDuplicates(partNumbers: PartNumber[]): PartNumber[] {
+  return pipe(
+    concat(take(partNumbers, 1), partNumbers),
+    pairwise(),
+    filter(
+      ([first, second]) =>
+        first === second ||
+        first.row !== second.row ||
+        first.number !== second.number ||
+        second.column - first.column > 1
+    ),
+    map(([_, second]) => second),
+    toarray()
+  );
+}
+
+//prettier-ignore
+const ADJACENT_NEIGHBOURS_M = [ [-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]];
 
 //1.
 function isPartNumber(grid: (number | string)[][], row: number, col: number) {
@@ -57,58 +59,64 @@ function isPartNumber(grid: (number | string)[][], row: number, col: number) {
     if (!isInsideMatrix(newRow, newCol, grid)) return false;
 
     const value = grid[newRow][newCol];
-    return typeof value !== "number" && value !== ".";
+    return typeof value !== 'number' && value !== '.';
   });
 }
 
-function getAdjacentNumbersSum(grid: (number | string)[][]) {
-  const partNumbers = removeNumbrResultDuplicates(
-    grid.flatMap((row, rowIndex) =>
-      pipe(
-        row,
-        filtermap((cell, colIndex) => {
-          return typeof cell === "number" && isPartNumber(grid, rowIndex, colIndex)
-            ? { number: cell, row: rowIndex, column: colIndex }
-            : null;
-        }),
-        toarray()
-      )
-    )
+function getPartNumbersInRow(rowIndex, grid): PartNumber[] {
+  return pipe(
+    grid[rowIndex],
+    filtermap((cell, colIndex) =>
+      typeof cell === 'number' && isPartNumber(grid, rowIndex, colIndex)
+        ? { number: cell, row: rowIndex, column: colIndex }
+        : null
+    ),
+    toarray()
   );
-  
-  return sum(partNumbers, (n) => n.number);
 }
 
-console.log(getAdjacentNumbersSum(parseInput(input)));
+function part1(grid: (number | string)[][]) {
+  return pipe(
+    grid,
+    map((r, i) => getPartNumbersInRow(i, grid)),
+    flatmap(r => removeNumbrResultDuplicates(r)),
+    sum(n => n.number)
+  );
+}
 
 //2.
-function getNumberNeighbours( grid: (number | string)[][], row: number, col: number) {
-  return ADJACENT_NEIGHBOURS_M.reduce((acc, [dr, dc]) => {
-    const newRow = row + dr;
-    const newCol = col + dc;
-
-    if (!isInsideMatrix(newRow, newCol, grid)) return acc;
-
-    const value = grid[newRow][newCol];
-    if (typeof value === "number")
-      acc.push({ number: value, row: newRow, column: newCol });
-    return acc;
-  }, [] as any[]);
-}
-
-function getGearNumbersMultiply(grid: (number | string)[][]) {
-  return sum(
-    grid.flatMap((row, rowIndex) =>
-      pipe(
-        row,
-        filtermap((col, colIndex) => {
-          const result = col === "*" ? removeNumbrResultDuplicates(getNumberNeighbours(grid, rowIndex, colIndex)) : [];
-          return result.length === 2 ? result[0].number * result[1].number : null
-        }),
-        sum()
-      )
-    )
+function getNumberNeighbours(grid: (number | string)[][], row: number, col: number): PartNumber[] {
+  return pipe(
+    ADJACENT_NEIGHBOURS_M,
+    filtermap(([dr, dc]) => {
+      const newRow = row + dr;
+      const newCol = col + dc;
+      if (!isInsideMatrix(newRow, newCol, grid)) return null;
+      const value = grid[newRow][newCol];
+      return typeof value === 'number' ? { number: value, row: newRow, column: newCol } : null;
+    }),
+    flat(),
+    toarray()
   );
 }
 
-console.log(getGearNumbersMultiply(parseInput(input)));
+function getRowNeighboursSum(grid, index) {
+  return pipe(
+    grid[index],
+    filtermap((col, colIndex) => (col === '*' ? getNumberNeighbours(grid, index, colIndex) : null)),
+    map(r => removeNumbrResultDuplicates(r)),
+    sum(n => (n.length === 2 ? n[0].number * n[1].number : 0))
+  );
+}
+
+function part2(grid: (number | string)[][]) {
+  return pipe(
+    grid,
+    map((r, i) => getRowNeighboursSum(grid, i)),
+    sum()
+  );
+}
+
+const input = parseInput(fs.readFileSync('./day3/input.txt', 'utf-8'));
+console.log(part1(input));
+console.log(part2(input));

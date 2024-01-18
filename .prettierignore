@@ -1,0 +1,12 @@
+/src/**/server/**
+/deployment/**
+/docs/**
+/e2e/**
+/misc/**
+/mobile/**
+/tools/**
+/typings/**
+/test/**
+/gulpfile.ts
+/gulpfile2.ts
+/**/*.xlf
