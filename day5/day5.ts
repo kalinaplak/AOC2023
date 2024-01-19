@@ -1,59 +1,50 @@
-import { buffer, distinct, filter, flatmap, map, minby, pipe, some, toarray } from "powerseq";
-const fs = require("fs");
+import { buffer, distinct, filter, filtermap, flatmap, map, min, pipe, reverse, some, toarray } from 'powerseq';
+const fs = require('fs');
 
-const input = fs.readFileSync("./day5/input.txt", "utf8");
+const input = fs.readFileSync('./day5/input.txt', 'utf8');
 
 interface SeedData {
   seeds: number[];
   almanac: any[];
 }
 
-function parseInput(input: string): SeedData{
-  const [seedsLine, ...mapsLines] = input.split("\n\n");
-  const seeds = seedsLine.replace("seeds: ", "").split(" ").map(n => parseInt(n));
-  const almanac = mapsLines.map(l => l.split(':')[1].split('\n').filter(l => !!l).map(sl => sl.split(' ').map(n => parseInt(n))))
-  return { seeds, almanac }
+function parseAlmanacLines(lines: string[]): number[][][] {
+  return lines.map(line =>
+    pipe(
+      line.split(':')[1].split('\n'),
+      filtermap(sl => (!!sl ? sl.split(' ').map(Number) : null)),
+      toarray()
+    )
+  );
 }
 
-const { seeds, almanac } = parseInput(input);
-
-function getValueFromMapType(initial: number, mapType: number[][]): number{
-  const map = mapType.find(([_, source, range])=>{
-    return initial >= source && initial <= source + range;
-  });
-  return map ? map[0] + initial - map[1] : initial;
+function parseInput(input: string): SeedData {
+  const [seedsLine, ...mapsLines] = input.split('\n\n');
+  const seeds = seedsLine.replace('seeds: ', '').split(' ').map(Number);
+  const almanac = parseAlmanacLines(mapsLines);
+  return { seeds, almanac };
 }
 
-function getProcessedValue(seed: number, almanac: number[][][], processMapFn: (v: number, map: number[][]) => number){
-  return almanac.reduce((initial, almanacEntry) => processMapFn(initial, almanacEntry), seed);
+function isInputValueInRange(input, source, range) {
+  return input >= source && input <= source + range;
+}
+
+function getValueFromMapType(input: number, mapType: number[][], reverse = false): number {
+  const map = mapType.find(([dest, source, range]) => isInputValueInRange(input, !reverse ? source : dest, range));
+  const [destIndex, sourceIndex] = !reverse ? [0, 1] : [1, 0];
+  return map ? map[destIndex] + input - map[sourceIndex] : input;
+}
+
+function getProcessedValue(seed: number, almanac: number[][][], reverse = false) {
+  return almanac.reduce((initial, almanacEntry) => getValueFromMapType(initial, almanacEntry, reverse), seed);
 }
 
 //1.
-function getLowestLocation(seeds: number[], almanac: number[][][]){
-  return pipe(
-    seeds,
-    map(s => getProcessedValue(s, almanac, getValueFromMapType)),
-    minby(v => v)
-  )
+function part1(seeds: number[], almanac: number[][][]) {
+  return min(seeds, s => getProcessedValue(s, almanac));
 }
-console.log(getLowestLocation(seeds, almanac));
 
 //2.
-function isSeedInRange(seeds: number[], seed: number){
-  return pipe(
-    seeds,
-    buffer(2),
-    some(([start, count])=> start < seed && start + count >= seed)
-  )
-}
-
-function getValueFromReversedMapType(initial: number, mapType: number[][]): number{
-  const map = mapType.find(([source, destination, range])=>{
-    return initial >= source && initial <= source + range;
-  });
-  return map ? map[1] + initial - map[0] : initial;
-}
-
 /*
   Testing each lower bound (dest start) of every mapping.
   Mapped each back up to a seed, checked if it was valid, then mapped that back down to the location and took the smallest one.
@@ -69,23 +60,46 @@ function getValueFromReversedMapType(initial: number, mapType: number[][]): numb
   These are all mapped forwards to their corresponding locations which are [ 46, 60, 56 ],
   and the minimum of them is returned as the answer.
 */
-function getLowestLocationByRange(seedsRange: number[], almanac: number[][][]){
-  const reversedAlmanac = JSON.parse(JSON.stringify(almanac)).reverse().map(m => m.reverse());
-  const seedfromAlmanac2 = pipe(
-    reversedAlmanac,
-    flatmap((maps: any, i) => maps.flatMap(([_, source, range]) => {
-        const sourceEnd = source + range - 1;
-        return [
-          getProcessedValue(source, reversedAlmanac.slice(i + 1, reversedAlmanac.length), getValueFromReversedMapType),
-          getProcessedValue(sourceEnd, reversedAlmanac.slice(i + 1, reversedAlmanac.length), getValueFromReversedMapType),
-        ]
-      })
-    ),
-    distinct(),
-    filter((s:number) => isSeedInRange(seedsRange, s)),
+
+function reverseAlmanac(almanac: number[][][]) {
+  return pipe(
+    almanac,
+    reverse(),
+    map(m => [...reverse(m)]),
     toarray()
-  )
-  return getLowestLocation([ ...seedfromAlmanac2], almanac);
+  );
 }
 
-console.log(getLowestLocationByRange(seeds, almanac));
+function isSeedInRange(seeds: number[], seed: number) {
+  return pipe(
+    seeds,
+    buffer(2),
+    some(([start, count]) => start < seed && start + count >= seed)
+  );
+}
+
+function processReversedMapsRanges(maps, almanac: number[][][], index): number[] {
+  const almanacForIndex = almanac.slice(index + 1, almanac.length);
+  return maps.flatMap(([_, start, range]) => {
+    const end = start + range - 1;
+    return [getProcessedValue(start, almanacForIndex, true), getProcessedValue(end, almanacForIndex, true)];
+  });
+}
+
+function part2(seedsRanges: number[], almanac: number[][][]) {
+  const reversedAlmanac = reverseAlmanac(almanac);
+  const seedsFromAlmanacLocations = pipe(
+    reversedAlmanac,
+    flatmap((maps, i) => processReversedMapsRanges(maps, reversedAlmanac, i)),
+    distinct(),
+    filter(s => isSeedInRange(seedsRanges, s)),
+    toarray()
+  );
+  //todo: consider seeds not martched in almanac form seed ranges
+  return part1(seedsFromAlmanacLocations, almanac);
+}
+
+const { seeds, almanac } = parseInput(input);
+console.log(almanac);
+console.log(part1(seeds, almanac));
+console.log(part2(seeds, almanac));

@@ -9,7 +9,7 @@ interface Card {
   copies: number;
 }
 
-function parseNumbers(line: string) {
+function parseNumbers(line: string): number[] {
   return pipe(
     line.split(' '),
     filtermap((n: string) => (n ? parseInt(n) : null)),
@@ -26,6 +26,7 @@ function parseInput(input: string): Card[] {
         .split(':')[1]
         .split('|')
         .map(part => part.trim());
+        
       const winningNumbers = parseNumbers(winningStr);
       const givenNumbers = parseNumbers(givenStr);
 
@@ -44,23 +45,20 @@ function part1(cards: Card[]) {
 }
 
 //2.
+function processCards(cards: Card[]){
+  if(cards.length === 0) return 0;
+  const [head, ...tail] = cards;
+  const cardsToCopy = head.givenWinning.length;
+  const newTail = pipe(tail, map((c,i)=> i < cardsToCopy ? {...c, copies: c.copies + head.copies} : c), toarray())
+
+  return head.copies + processCards(newTail);
+}
+
 function part2(cards: Card[]) {
-  const clonedCards: Card[] = JSON.parse(JSON.stringify(cards));
-  //todo xD
-  return pipe(
-    clonedCards,
-    map((card, i) => {
-      const cardsToCopy = card.givenWinning.length;
-      const cardsInRange = clonedCards.slice(i + 1, i + cardsToCopy + 1);
-      cardsInRange.forEach(toCopy => {
-        toCopy.copies += card.copies;
-      });
-      return card.copies;
-    }),
-    sum()
-  );
+ return processCards(cards);
 }
 
 const input = parseInput(fs.readFileSync('./day4/input.txt', 'utf-8'));
 console.log(part1(input));
 console.log(part2(input));
+
