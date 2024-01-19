@@ -5,7 +5,7 @@ const input = fs.readFileSync('./day5/input.txt', 'utf8');
 
 interface SeedData {
   seeds: number[];
-  almanac: any[];
+  almanac: number[][][];
 }
 
 function parseAlmanacLines(lines: string[]): number[][][] {

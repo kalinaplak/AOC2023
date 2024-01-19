@@ -9,19 +9,14 @@ interface Race {
 
 const input = fs.readFileSync('./day6/input.txt', 'utf-8');
 
-function parseLine(line: string) {
-  return line.trim().split(/\s+/).map(Number);
-}
-
 function parseInput(input: string): Race[] {
-  const [times, distances] = input.split('\n').map(l => parseLine(l.split(':')[1]));
+  const [times, distances] = input.split('\n').map(l => l.match(/\d+/g).map(Number));
   return times.map((time, index) => ({
     time,
     distance: distances[index]
   }));
 }
 
-//1.
 function calculateWinningValues(totalTime: number, distance: number): number {
   return pipe(
     range(0, totalTime),
@@ -30,6 +25,7 @@ function calculateWinningValues(totalTime: number, distance: number): number {
   ).length;
 }
 
+//1.
 function part1(races: Race[]) {
   return pipe(
     races,
@@ -40,7 +36,7 @@ function part1(races: Race[]) {
 
 //2.
 function parseInputToSingleRace(input: string): Race {
-  const [time, distance] = input.split('\n').map(l => parseInt(l.split(':')[1].split(/\s+/).join('')));
+  const [time, distance] = input.split('\n').map(l => parseInt(l.match(/\d+/g).join('')));
   return { distance, time };
 }
 
