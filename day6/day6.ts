@@ -1,4 +1,4 @@
-import { filter, map, pipe, range, reduce, toarray } from 'powerseq';
+import { count, filter, map, pipe, range, reduce } from 'powerseq';
 
 const fs = require('fs');
 
@@ -7,22 +7,19 @@ interface Race {
   distance: number;
 }
 
-const input = fs.readFileSync('./day6/input.txt', 'utf-8');
+const input = fs.readFileSync('./day6/inputMini.txt', 'utf-8');
 
 function parseInput(input: string): Race[] {
   const [times, distances] = input.split('\n').map(l => l.match(/\d+/g).map(Number));
-  return times.map((time, index) => ({
-    time,
-    distance: distances[index]
-  }));
+  return times.map((time, index) => ({ time, distance: distances[index] }));
 }
 
 function calculateWinningValues(totalTime: number, distance: number): number {
   return pipe(
     range(0, totalTime),
     filter(x => totalTime * x - x * x > distance),
-    toarray()
-  ).length;
+    count()
+  );
 }
 
 //1.

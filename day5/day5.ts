@@ -95,7 +95,7 @@ function part2(seedsRanges: number[], almanac: number[][][]) {
     filter(s => isSeedInRange(seedsRanges, s)),
     toarray()
   );
-  //todo: consider seeds not martched in almanac form seed ranges
+  //todo: consider seeds not matched in almanac form seed ranges
   return part1(seedsFromAlmanacLocations, almanac);
 }
 

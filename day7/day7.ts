@@ -28,16 +28,27 @@ function parseInput(input: string, withJoker = false) {
   );
 }
 
-//prettier-ignore
-function getCardTypeForGroupedCardsHand(cardGroupsLengths: number[]): CardType {
-  const [firstGroupLength, secondGroupLength] = cardGroupsLengths;
-  switch (firstGroupLength) {
-    case 5:  return 'five';
-    case 4:  return 'four';
-    case 3:  return secondGroupLength === 2 ? 'full' : 'three';
-    case 2:  return secondGroupLength === 2 ? 'twopairs' : 'pair';
-    default: return 'nothing';
+function mapCardsToHand(cards: string[], bid: number, withJoker = false): Hand {
+  if (!withJoker || !cards.includes('J')) {
+    return { type: getCardTypeInHand(cards), cards, bid };
+  } else {
+    const cardsWithoutJokers = cards.filter(c => c !== 'J');
+    const numberOfJokers = cards.length - cardsWithoutJokers.length;
+    const handWithoutJokerType = getCardTypeInHand(cardsWithoutJokers);
+    const typeWithJoker = getCardTypeInHandWithJoker(handWithoutJokerType, numberOfJokers);
+    return { type: typeWithJoker, cards, bid };
   }
+}
+
+function getCardTypeInHand(cards: string[]): CardType {
+  const groupedCards = pipe(
+    cards,
+    groupby(c => c),
+    map(([_, values]) => values.length),
+    orderbydescending(n => n),
+    toarray()
+  );
+  return getCardTypeForGroupedCardsHand(groupedCards);
 }
 
 //prettier-ignore
@@ -56,26 +67,15 @@ function getCardTypeInHandWithJoker(withoutJType: CardType, jokers: number): Car
   }
 }
 
-function getCardTypeInHand(cards: string[]): CardType {
-  const groupedCards = pipe(
-    cards,
-    groupby(c => c),
-    map(([_, values]) => values.length),
-    orderbydescending(n => n),
-    toarray()
-  );
-  return getCardTypeForGroupedCardsHand(groupedCards);
-}
-
-function mapCardsToHand(cards: string[], bid: number, withJoker = false): Hand {
-  if (!withJoker || !cards.includes('J')) {
-    return { type: getCardTypeInHand(cards), cards, bid };
-  } else {
-    const cardsWithoutJokers = cards.filter(c => c !== 'J');
-    const numberOfJokers = cards.length - cardsWithoutJokers.length;
-    const handWithoutJokerType = getCardTypeInHand(cardsWithoutJokers);
-    const typeWithJoker = getCardTypeInHandWithJoker(handWithoutJokerType, numberOfJokers);
-    return { type: typeWithJoker, cards, bid };
+//prettier-ignore
+function getCardTypeForGroupedCardsHand(cardGroupsLengths: number[]): CardType {
+  const [firstGroupLength, secondGroupLength] = cardGroupsLengths;
+  switch (firstGroupLength) {
+    case 5:  return 'five';
+    case 4:  return 'four';
+    case 3:  return secondGroupLength === 2 ? 'full' : 'three';
+    case 2:  return secondGroupLength === 2 ? 'twopairs' : 'pair';
+    default: return 'nothing';
   }
 }
 

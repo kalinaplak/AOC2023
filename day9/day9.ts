@@ -1,4 +1,4 @@
-import { map, pipe, toarray, reverse, sum, pairwise } from 'powerseq';
+import { map, pairwise, pipe, sum, toarray } from 'powerseq';
 
 const fs = require('fs');
 
@@ -22,7 +22,6 @@ function processLineRec(line: number[], acc: number[][] = []) {
 function extrapolateNextValueInLine(line: number[]) {
   return pipe(
     processLineRec(line),
-    reverse(),
     sum((numbers: number[]) => numbers[numbers.length - 1])
   );
 }
